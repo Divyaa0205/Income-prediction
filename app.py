@@ -26,13 +26,15 @@ categorical_cols = ['workclass', 'marital_status', 'occupation', 'relationship',
 def index():
     return render_template('index.html')
 
+
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
-        
+        # Extracting input data from the form
         data = {col: request.form[col] for col in numerical_cols + categorical_cols}
+        print(f"Received data: {data}")
 
-        
+        # Convert numerical data
         numerical_data = {}
         for col in numerical_cols:
             try:
@@ -40,36 +42,49 @@ def predict():
             except ValueError:
                 return jsonify({'error': f'Invalid value for {col}'}), 400
 
+        # Prepare DataFrames for numerical and categorical data
+        numerical_df = pd.DataFrame([numerical_data])  # Numerical data
+        print("Numerical DataFrame:\n", numerical_df)
+
         categorical_data = {col: data[col] for col in categorical_cols}
+        categorical_df = pd.DataFrame([categorical_data])  # Categorical data
+        print("Categorical DataFrame Before Encoding:\n", categorical_df)
 
-        
-        numerical_df = pd.DataFrame([numerical_data])
-
-        
-        categorical_df = pd.DataFrame([categorical_data])
+        # One-hot encode categorical features
         categorical_df = pd.get_dummies(categorical_df, drop_first=True)
+        print("Categorical DataFrame After Encoding:\n", categorical_df)
 
-    
-        for col in model_columns:
-            if col not in categorical_df.columns and col not in numerical_df.columns:
-                categorical_df[col] = 0
+        # Reindex categorical DataFrame to match training columns
+        categorical_df = categorical_df.reindex(
+            columns=[col for col in model_columns if col not in numerical_cols], fill_value=0
+        )
+        print("Reindexed Categorical DataFrame:\n", categorical_df)
 
-        
+        # Combine numerical and categorical data
         input_df = pd.concat([numerical_df, categorical_df], axis=1)
-        input_df = input_df[model_columns]
+        print("Combined DataFrame Before Final Reindexing:\n", input_df)
 
-        
+        # Reindex to ensure input_df has the same columns as model_columns
+        input_df = input_df.reindex(columns=model_columns, fill_value=0)
+        print("Reindexed Input DataFrame:\n", input_df)
+
+        # Scale numerical data
         input_df[numerical_cols] = scaler.transform(input_df[numerical_cols])
+        print("Final Input DataFrame After Scaling:\n", input_df)
 
-        # Predict income
+        # Make prediction
         prediction = model.predict(input_df)[0]
         income = ">50K" if prediction == 1 else "<=50K"
 
-        return render_template('result.html',prediction = income)
+        return render_template('result.html', prediction=income)
 
     except Exception as e:
-        return jsonify({'error': str(e)})
-   
+        print("Error encountered:", str(e))
+        return jsonify({'error': str(e)}), 500
+
+
+
+
     
 if __name__ == "__main__":
     app.run(debug=True)
