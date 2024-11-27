@@ -30,20 +30,27 @@ def predict():
     # print("Model Columns:", model_columns)
     # print(set(cat_df.columns) - set(model_columns))
     
-    if list(cat_df.columns) == list(model_columns):
-        print("True")
-    else:
-        print("False")
+    # if list(cat_df.columns) == list(model_columns):
+    #     print("True")
+    # else:
+    #     print("False")
+
+    for i, (input_col, model_col) in enumerate(zip(cat_df.columns, model_columns)):
+        if input_col != model_col:
+            print(f"Column mismatch at position {i}: Input column '{input_col}' does not match model column '{model_col}'.")
+        else:
+            print("ALL columns matched ")
 
     numerical_data = {col: int(form_data[col]) for col in numerical_cols}
     # print(numerical_data)
     num_df = pd.DataFrame([numerical_data])
 
     input_df = pd.concat([num_df, cat_df], axis=1)
+    print(input_df.columns)
     input_df[numerical_cols] = scaler.transform(input_df[numerical_cols])
     
     input_df = input_df.drop(columns=numerical_cols)
-    # print(input_df.columns)
+    print(input_df.columns)
     input_df = input_df.fillna(0)
 
     print(input_df)
