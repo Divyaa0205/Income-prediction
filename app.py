@@ -22,27 +22,32 @@ def predict():
     cat_data = {col: form_data[col] for col in categorical_cols}
     cat_df = pd.DataFrame([cat_data])
     cat_df = pd.get_dummies(cat_df, columns=categorical_cols, drop_first=False)
+    # print(cat_df)
 
     cat_df = cat_df.reindex(columns=model_columns, fill_value=0)
-    print("Input Data Columns:", cat_df.columns)
-    print("Model Columns:", model_columns)
-
-
+    # print(cat_df)
+    # print("Input Data Columns:", cat_df.columns)
+    # print("Model Columns:", model_columns)
+    print(set(cat_df.columns) - set(model_columns))
 
     numerical_data = {col: int(form_data[col]) for col in numerical_cols}
+    # print(numerical_data)
     num_df = pd.DataFrame([numerical_data])
 
     input_df = pd.concat([num_df, cat_df], axis=1)
     input_df[numerical_cols] = scaler.transform(input_df[numerical_cols])
     
     input_df = input_df.drop(columns=numerical_cols)
+    # print(input_df.columns)
     input_df = input_df.fillna(0)
 
-
+    print(input_df)
     prediction = model.predict(input_df)[0]
     income_prediction = ">50K" if prediction == 1 else "<=50K"
 
     return render_template('result.html', prediction=income_prediction)
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)
