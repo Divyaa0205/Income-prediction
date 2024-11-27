@@ -28,7 +28,12 @@ def predict():
     # print(cat_df)
     # print("Input Data Columns:", cat_df.columns)
     # print("Model Columns:", model_columns)
-    print(set(cat_df.columns) - set(model_columns))
+    # print(set(cat_df.columns) - set(model_columns))
+    
+    if list(cat_df.columns) == list(model_columns):
+        print("True")
+    else:
+        print("False")
 
     numerical_data = {col: int(form_data[col]) for col in numerical_cols}
     # print(numerical_data)
